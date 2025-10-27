@@ -1,12 +1,16 @@
 services:
+  # =========================
+  # 🟢 BACKEND SERVICE (Spring Boot)
+  # =========================
   - type: web
     name: suems-backend
     env: docker
     plan: free
     branch: main
-    buildCommand: ./mvnw clean package -DskipTests
-    startCommand: java -jar target/*.jar
+
     dockerfilePath: ./Dockerfile
+    autoDeploy: true
+
     envVars:
       - key: SPRING_DATASOURCE_URL
         value: jdbc:mysql://<your-db-host>:3306/<your-db-name>
@@ -14,14 +18,32 @@ services:
         value: <your-username>
       - key: SPRING_DATASOURCE_PASSWORD
         value: <your-password>
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: update
+      - key: SERVER_PORT
+        value: 8080
 
+    # The backend will listen on port 8080
+    # Build and run using Docker (mvn is not needed here)
+    # Because your Dockerfile already runs the jar
+
+  # =========================
+  # 🟣 FRONTEND SERVICE (Nginx)
+  # =========================
   - type: web
     name: suems-frontend
     env: docker
     plan: free
     branch: main
+
+    # This points to your frontend Dockerfile
     dockerfilePath: ./frontend/Dockerfile
+
+    # This ensures the Docker build context includes frontend/
+    rootDir: ./frontend
+
     autoDeploy: true
+
     envVars:
       - key: NODE_ENV
         value: production
