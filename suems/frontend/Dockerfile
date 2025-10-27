@@ -1,8 +1,14 @@
-# Step 1 — Use official Nginx image
+# Use official lightweight Nginx image
 FROM nginx:alpine
 
-# Step 2 — Copy your frontend files to nginx web folder
-COPY . /usr/share/nginx/html
+# Remove the default nginx index page
+RUN rm -rf /usr/share/nginx/html/*
 
-# Step 3 — Expose port
+# Copy only your frontend website files (adjust if your files are inside subfolder)
+COPY . /usr/share/nginx/html/
+
+# Expose port 80 for Render
 EXPOSE 80
+
+# Default command to run nginx
+CMD ["nginx", "-g", "daemon off;"]
