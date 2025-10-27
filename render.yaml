@@ -1,36 +1,27 @@
 services:
-  # Frontend Service (Nginx)
-  - type: web
-    name: suems-frontend
-    env: docker
-    rootDir: ./frontend
-    dockerfilePath: ./frontend/Dockerfile
-    plan: free
-    envVars:
-      - key: NODE_ENV
-        value: production
-    autoDeploy: true
-    domains:
-      - suems.onrender.com
-    buildCommand: ""
-    startCommand: ""
-    healthCheckPath: /
-
-  # Backend Service (Spring Boot)
   - type: web
     name: suems-backend
     env: docker
-    dockerfilePath: ./Dockerfile
     plan: free
+    branch: main
+    buildCommand: ./mvnw clean package -DskipTests
+    startCommand: java -jar target/*.jar
+    dockerfilePath: ./Dockerfile
     envVars:
-      - key: SPRING_PROFILES_ACTIVE
-        value: prod
-      - key: DB_URL
-        value: your_database_url
-      - key: DB_USERNAME
-        value: your_database_username
-      - key: DB_PASSWORD
-        value: your_database_password
+      - key: SPRING_DATASOURCE_URL
+        value: jdbc:mysql://<your-db-host>:3306/<your-db-name>
+      - key: SPRING_DATASOURCE_USERNAME
+        value: <your-username>
+      - key: SPRING_DATASOURCE_PASSWORD
+        value: <your-password>
+
+  - type: web
+    name: suems-frontend
+    env: docker
+    plan: free
+    branch: main
+    dockerfilePath: ./frontend/Dockerfile
     autoDeploy: true
-    domains:
-      - suems-api.onrender.com
+    envVars:
+      - key: NODE_ENV
+        value: production
