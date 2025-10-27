@@ -1,14 +1,8 @@
 # Step 1 — Use official Nginx image
-FROM nginx:stable-alpine
+FROM nginx:alpine
 
-# Step 2 — Remove the default nginx html files
-RUN rm -rf /usr/share/nginx/html/*
-
-# Step 3 — Copy your frontend files into Nginx html directory
+# Step 2 — Copy your frontend files to nginx web folder
 COPY . /usr/share/nginx/html
 
-# Step 4 — Expose port 80 (Render auto detects it)
+# Step 3 — Expose port
 EXPOSE 80
-
-# Step 5 — Start nginx
-CMD ["nginx", "-g", "daemon off;"]
