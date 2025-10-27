@@ -1,14 +1,22 @@
-# Step 1: Use lightweight Nginx image
+# Use lightweight Nginx image
 FROM nginx:alpine
 
-# Step 2: Remove default Nginx index page
+# Remove default Nginx index page
 RUN rm -rf /usr/share/nginx/html/*
 
-# Step 3: Copy all files from current folder to Nginx html folder
+# If your HTML files are directly in /frontend
 COPY . /usr/share/nginx/html/
 
-# Step 4: Expose port 80 for Render
+# If your HTML files are in /frontend/public or /frontend/dist
+# COPY ./public /usr/share/nginx/html/
+# or
+# COPY ./dist /usr/share/nginx/html/
+
+# Optional: custom Nginx config (prevents 403 and SPA reload errors)
+COPY default.conf /etc/nginx/conf.d/default.conf
+
+# Expose port 80 for Render
 EXPOSE 80
 
-# Step 5: Start Nginx
+# Start Nginx
 CMD ["nginx", "-g", "daemon off;"]
