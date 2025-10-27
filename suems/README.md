@@ -303,5 +303,4 @@ On errors, the API returns a consistent shape with a timestamp:
 ---
 
 Happy building! If you want, we can add a Postman collection, Docker Compose for MySQL+App, or a profile for H2 in-memory dev.
-#   s u e m s  
- 
+#
