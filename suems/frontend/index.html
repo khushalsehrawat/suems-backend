@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="SUEMS — Smart Urban Energy Management System. Real-time renewable analytics. Java • Spring Boot • MySQL • REST API" />
+  <title>SUEMS — Monitor Energy Smarter</title>
+
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+
+  <style>
+    :root{
+      --ink:#0e2017;
+      --muted:#5a7466;
+      --green:#20c67a;
+      --green-2:#18a96a;
+      --glass: rgba(255,255,255,.14);
+      --glass-b:#d7efe3;
+      --card:#ffffff;
+      --grad-1: linear-gradient(120deg, #e6f7ec, #b6f3c5 30%, #f0fff5 70%);
+      --grad-2: linear-gradient(120deg, #e9fbf0, #d6f9ea 50%, #f7fffb);
+      --grad-3: linear-gradient(120deg, #eefcf4, #e0fff3 50%, #f8fffb);
+      --btn-grad: linear-gradient(150deg, #1cc77b, #27d893 60%, #14a164);
+      --btn-grad-dark: linear-gradient(150deg, #17b06c, #20c67a 60%, #0f8f56);
+      --ring: radial-gradient(600px 300px at 20% 20%, rgba(46,214,137,.18), transparent 60%),
+              radial-gradient(800px 300px at 80% 80%, rgba(30,180,150,.14), transparent 60%);
+      --shadow: 0 22px 60px rgba(0,0,0,.12);
+      --glow: 0 0 0 0 rgba(32,198,122,0);
+    }
+
+    html,body{scroll-behavior:smooth;background:#f7fffb;color:var(--ink)}
+    *{box-sizing:border-box}
+    a{text-decoration:none}       /* ✅ no underline anywhere */
+    .muted{color:var(--muted)}
+
+    /* ---------- NAV ---------- */
+    .navbar{
+      padding:.85rem 0;
+      backdrop-filter: blur(10px);
+      background: linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,.45));
+      border-bottom:1px solid rgba(255,255,255,.6);
+    }
+    .navbar-brand{font-weight:800; letter-spacing:.5px;}
+    .nav-link{color:#133125; font-weight:600}
+    .nav-link:hover{color:#0c8a53}
+
+    .login-btn{
+      padding:.55rem 1rem;
+      font-weight:700;
+      border-radius:12px;
+      color:#fff !important;
+      background:var(--btn-grad);
+      box-shadow: 0 10px 30px rgba(39,216,147,.25);
+      border:0;
+      display:inline-flex;align-items:center;gap:.5rem
+    }
+    .login-btn:hover{background:var(--btn-grad-dark)}
+
+    /* ---------- HERO ---------- */
+    .hero{
+      position:relative;
+      overflow:hidden;
+      padding-top:110px;
+      background: var(--ring), radial-gradient(80% 60% at 50% 0%, #ebfff4, #dff9ec);
+    }
+    .hero-inner{
+      position:relative; z-index:2;
+      display:grid; grid-template-columns: 1.1fr .9fr; gap:32px;
+      align-items:center;
+    }
+    @media (max-width: 992px){ .hero-inner{grid-template-columns:1fr; text-align:center} }
+
+    .hero h1{
+      font-size: clamp(2.2rem, 4.4vw, 4rem);
+      line-height: 1.08;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: .6rem;
+      text-shadow: 0 24px 60px rgba(0,0,0,.2);
+    }
+    .hero p.lead{
+      font-size: clamp(1rem, 1.2vw, 1.2rem);
+      color:#355345;
+      max-width: 56ch;
+    }
+
+    .cta-wrap{display:flex;flex-wrap:wrap; gap:14px; margin-top:18px}
+    .cta-btn{
+      display:inline-flex; align-items:center; gap:.6rem;
+      padding:.85rem 1.2rem; border-radius:14px; font-weight:800; color:#fff;
+      background:var(--btn-grad);
+      box-shadow: 0 16px 40px rgba(32,198,122,.35);
+      letter-spacing:.2px;
+    }
+    .cta-btn:hover{background:var(--btn-grad-dark)}
+    .ghost-btn{
+      display:inline-flex; align-items:center; gap:.6rem;
+      padding:.85rem 1.1rem; border-radius:14px; font-weight:800; color:#0d6a46;
+      background: #fff; border:1px solid #dff1e4;
+    }
+    .ghost-btn:hover{box-shadow:var(--shadow)}
+
+    /* animated waves */
+    .hero-waves{
+      position:absolute; inset:0; z-index:1; pointer-events:none;
+      opacity:.9;
+    }
+
+    /* ---------- SECTIONS ---------- */
+    section{padding: clamp(60px, 9vw, 110px) 0}
+    .section-eyebrow{letter-spacing:.18em; text-transform:uppercase; color:#138455; font-weight:800; font-size:.9rem}
+    .section-title{font-weight:800; letter-spacing:-.02em}
+
+    .band-green{background:var(--grad-2)}
+    .band-light{background:var(--grad-3)}
+
+    /* Cards */
+    .cardx{
+      background: linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,.45));
+      border:1px solid var(--glass-b);
+      border-radius:18px; padding:22px;
+      box-shadow:var(--shadow);
+      transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+    }
+    .cardx:hover{ transform:translateY(-3px); box-shadow:0 28px 60px rgba(0,0,0,.16)}
+    .icon-ring{
+      width:52px;height:52px;border-radius:50%;
+      display:grid;place-items:center;margin-bottom:10px;
+      background: radial-gradient(60% 60% at 50% 50%, rgba(32,198,122,.18), rgba(32,198,122,.04));
+      border:1px solid #cfeee0;
+      color:#14a164;
+    }
+
+    /* Title ring ornament */
+    .title-wrap{position:relative; display:inline-block; padding-left:64px;}
+    .title-wrap svg{position:absolute; left:0; top:-8px; width:52px; height:52px; opacity:.7; filter:drop-shadow(0 6px 18px rgba(20,161,100,.25))}
+
+    /* Tech & chips */
+    .chip{
+      display:inline-flex; align-items:center; gap:.5rem;
+      padding:.55rem .9rem; border-radius:12px; font-weight:600;
+      background:#fff; border:1px solid #e1f3e6; color:#1b4a36;
+      box-shadow: 0 6px 18px rgba(0,0,0,.06);
+    }
+
+    /* Footer */
+    footer{
+      padding:42px 0; text-align:center;
+      background: linear-gradient(180deg, #f8fffb, #eefcf4);
+      border-top:1px solid #e7f5ec;
+    }
+
+    /* Reveal base state (GSAP will animate to visible) */
+    .reveal{opacity:0; transform: translateY(18px)}
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="navbar navbar-expand-lg fixed-top">
+    <div class="container">
+      <a class="navbar-brand text-dark" href="#">SUEMS</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
+      <div class="collapse navbar-collapse" id="nav">
+        <ul class="navbar-nav ms-auto align-items-lg-center gap-3">
+          <li class="nav-item"><a class="nav-link" href="#about">About</a></li>
+          <li class="nav-item"><a class="nav-link" href="#how">How it works</a></li>
+          <li class="nav-item"><a class="nav-link" href="#architecture">Architecture</a></li>
+          <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+          <li class="nav-item"><a class="nav-link" href="#tech">Tech</a></li>
+          <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+          <li class="nav-item"><a class="login-btn" href="login.html"><i class="fa-solid fa-gauge-high"></i> Login Dashboard</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero">
+    <!-- animated SVG gradient waves -->
+    <svg class="hero-waves" viewBox="0 0 1440 720" preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <!-- animated green gradient -->
+        <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"  stop-color="#a6f6c1">
+            <animate attributeName="stop-color" values="#a6f6c1; #7de2b8; #a6f6c1" dur="10s" repeatCount="indefinite"/>
+          </stop>
+          <stop offset="50%" stop-color="#6de6a9">
+            <animate attributeName="stop-color" values="#6de6a9; #48d497; #6de6a9" dur="10s" repeatCount="indefinite"/>
+          </stop>
+          <stop offset="100%" stop-color="#b9ffd7">
+            <animate attributeName="stop-color" values="#b9ffd7; #93f0c9; #b9ffd7" dur="10s" repeatCount="indefinite"/>
+          </stop>
+        </linearGradient>
+
+        <filter id="softBlur"><feGaussianBlur stdDeviation="12"/></filter>
+      </defs>
+
+      <path d="M0,120 C280,220 420,30 720,120 C1000,200 1210,60 1440,120 L1440,0 L0,0 Z"
+            fill="url(#g1)" opacity=".55" filter="url(#softBlur)">
+        <animate attributeName="d" dur="14s" repeatCount="indefinite"
+                 values="
+                 M0,120 C280,220 420,30 720,120 C1000,200 1210,60 1440,120 L1440,0 L0,0 Z;
+                 M0,110 C260,160 420,80 720,150 C1020,220 1220,40 1440,110 L1440,0 L0,0 Z;
+                 M0,130 C300,210 420,20 720,110 C980,180 1210,80 1440,130 L1440,0 L0,0 Z;
+                 M0,120 C280,220 420,30 720,120 C1000,200 1210,60 1440,120 L1440,0 L0,0 Z"/>
+      </path>
+
+      <path d="M0,260 C240,310 420,180 720,240 C980,290 1200,210 1440,240 L1440,0 L0,0 Z"
+            fill="url(#g1)" opacity=".35" filter="url(#softBlur)">
+        <animate attributeName="d" dur="18s" repeatCount="indefinite"
+                 values="
+                 M0,260 C240,310 420,180 720,240 C980,290 1200,210 1440,240 L1440,0 L0,0 Z;
+                 M0,280 C260,330 420,200 720,260 C980,300 1200,240 1440,250 L1440,0 L0,0 Z;
+                 M0,250 C220,300 420,150 720,230 C1000,300 1210,190 1440,230 L1440,0 L0,0 Z;
+                 M0,260 C240,310 420,180 720,240 C980,290 1200,210 1440,240 L1440,0 L0,0 Z"/>
+      </path>
+    </svg>
+
+    <div class="container position-relative" style="z-index:2;">
+      <div class="hero-inner">
+        <div class="reveal">
+          <div class="title-wrap">
+            <!-- energy pulse ring -->
+            <svg viewBox="0 0 100 100">
+              <defs>
+                <radialGradient id="pulse" cx="50%" cy="50%">
+                  <stop offset="0%" stop-color="#22d488"/>
+                  <stop offset="100%" stop-color="rgba(34,212,136,0)"/>
+                </radialGradient>
+              </defs>
+              <circle cx="50" cy="50" r="22" fill="url(#pulse)">
+                <animate attributeName="r" values="18;26;18" dur="2.8s" repeatCount="indefinite"/>
+                <animate attributeName="opacity" values=".6;.2;.6" dur="2.8s" repeatCount="indefinite"/>
+              </circle>
+            </svg>
+            <h1>Monitor Energy — Smarter, Cleaner, Faster.</h1>
+          </div>
+          <p class="lead mt-3 mb-4">
+            SUEMS (Smart Urban Energy Management System) unifies solar, wind, EV and grid telemetry into a living dashboard.
+            Reduce grid load, predict demand, and track cost — all in real time.
+          </p>
+          <div class="cta-wrap">
+            <a class="cta-btn" href="login.html"><i class="fa-solid fa-gauge"></i> Launch Dashboard</a>
+            <a class="ghost-btn" href="#about"><i class="fa-solid fa-arrow-down-long"></i> Explore SUEMS</a>
+          </div>
+        </div>
+
+        <div class="reveal">
+          <!-- premium glass card with quick stats -->
+          <div class="cardx p-4">
+            <div class="d-flex align-items-center mb-3">
+              <div class="icon-ring me-3"><i class="fa-solid fa-bolt"></i></div>
+              <div>
+                <strong>Live Telemetry</strong>
+                <div class="muted small">Updates every 10s • JWT-secured API</div>
+              </div>
+            </div>
+            <div class="row g-3">
+              <div class="col-6">
+                <div class="chip w-100 justify-content-between">
+                  <span><i class="fa-solid fa-solar-panel"></i> Solar</span> <b>+12.4 kW</b>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="chip w-100 justify-content-between">
+                  <span><i class="fa-solid fa-wind"></i> Wind</span> <b>+8.1 kW</b>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="chip w-100 justify-content-between">
+                  <span><i class="fa-solid fa-plug-circle-bolt"></i> Grid</span> <b>−4.2 kW</b>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="chip w-100 justify-content-between">
+                  <span><i class="fa-solid fa-indian-rupee-sign"></i> Cost</span> <b>₹54.7 / hr</b>
+                </div>
+              </div>
+            </div>
+            <div class="mt-3 small muted">* Sample values for illustration; live values in your dashboard.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ABOUT / WHY -->
+  <section id="about" class="band-light">
+    <div class="container">
+      <div class="row align-items-center g-4">
+        <div class="col-lg-6 reveal">
+          <div class="section-eyebrow">Why SUEMS</div>
+          <h2 class="section-title mt-2 mb-3">Designed for a Carbon-Smart Future</h2>
+          <p class="lead mb-4">
+            SUEMS turns raw energy signals into actionable intelligence. With 10-second granularity, glass-smooth interfaces,
+            and a secure Spring Boot backend, you get an end-to-end energy brain for homes, campuses, fleets and cities.
+          </p>
+          <div class="d-grid gap-3">
+            <div class="cardx">
+              <div class="d-flex align-items-center">
+                <div class="icon-ring me-3"><i class="fa-solid fa-sparkles"></i></div>
+                <div><b>Premium UX</b><div class="muted small">Calm visuals, minimal clicks, built for velocity.</div></div>
+              </div>
+            </div>
+            <div class="cardx">
+              <div class="d-flex align-items-center">
+                <div class="icon-ring me-3"><i class="fa-solid fa-shield-halved"></i></div>
+                <div><b>Secure by Default</b><div class="muted small">JWT auth, stateless APIs, role-ready.</div></div>
+              </div>
+            </div>
+            <div class="cardx">
+              <div class="d-flex align-items-center">
+                <div class="icon-ring me-3"><i class="fa-solid fa-leaf"></i></div>
+                <div><b>Renewable-First</b><div class="muted small">Blend solar, wind, EVs and grid with clarity.</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6 reveal">
+          <div class="section-eyebrow">At a Glance</div>
+          <div class="row g-3">
+            <div class="col-sm-6">
+              <div class="cardx h-100">
+                <h5 class="mb-1">20%+</h5>
+                <div class="muted small">Potential grid load reduction with active management.</div>
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="cardx h-100">
+                <h5 class="mb-1">10s</h5>
+                <div class="muted small">Telemetry interval for near-real-time insight.</div>
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="cardx h-100">
+                <h5 class="mb-1">Scalable</h5>
+                <div class="muted small">From a single site to city-scale deployments.</div>
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="cardx h-100">
+                <h5 class="mb-1">API-Native</h5>
+                <div class="muted small">Integrate with billing, BMS, and IoT platforms.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>  
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how">
+    <div class="container">
+      <div class="text-center mb-5">
+        <div class="section-eyebrow">System Overview</div>
+        <h2 class="section-title mt-2">Connecting Data to Sustainable Action</h2>
+        <p class="muted">A clean three-stage pipeline — collect, process, act.</p>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-4 reveal">
+          <div class="cardx h-100 text-center p-4">
+            <div class="icon-ring mx-auto"><i class="fa-solid fa-satellite"></i></div>
+            <h5 class="mt-2">1) Data Acquisition</h5>
+            <p class="muted mb-0">IoT meters & sensors streaming solar, wind, EV, and grid readings from distributed nodes.</p>
+          </div>
+        </div>
+        <div class="col-md-4 reveal">
+          <div class="cardx h-100 text-center p-4">
+            <div class="icon-ring mx-auto"><i class="fa-solid fa-server"></i></div>
+            <h5 class="mt-2">2) Central Processing</h5>
+            <p class="muted mb-0">Spring Boot services persist to MySQL, validate with Jakarta Validation, secure with JWT.</p>
+          </div>
+        </div>
+        <div class="col-md-4 reveal">
+          <div class="cardx h-100 text-center p-4">
+            <div class="icon-ring mx-auto"><i class="fa-solid fa-chart-line"></i></div>
+            <h5 class="mt-2">3) Intelligent Insights</h5>
+            <p class="muted mb-0">Web dashboard visualizes live consumption, cost, and mix with smooth real-time motion.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE -->
+  <section id="architecture" class="band-green">
+    <div class="container">
+      <div class="text-center mb-5">
+        <div class="section-eyebrow">Architecture</div>
+        <h2 class="section-title mt-2">Modular, Secure & Extensible</h2>
+      </div>
+      <div class="row g-4">
+        <div class="col-lg-6 reveal">
+          <div class="cardx h-100">
+            <h5 class="mb-3">Core Modules</h5>
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <div class="chip w-100"><i class="fa-solid fa-user-shield"></i> Auth & JWT</div>
+              </div>
+              <div class="col-sm-6">
+                <div class="chip w-100"><i class="fa-solid fa-database"></i> JPA + MySQL</div>
+              </div>
+              <div class="col-sm-6">
+                <div class="chip w-100"><i class="fa-solid fa-signal"></i> Sensor APIs</div>
+              </div>
+              <div class="col-sm-6">
+                <div class="chip w-100"><i class="fa-solid fa-sliders"></i> Simulator Control</div>
+              </div>
+              <div class="col-sm-6">
+                <div class="chip w-100"><i class="fa-solid fa-file-csv"></i> CSV Export</div>
+              </div>
+              <div class="col-sm-6">
+                <div class="chip w-100"><i class="fa-solid fa-lock"></i> CORS & Security</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6 reveal">
+          <div class="cardx h-100">
+            <h5 class="mb-3">Data Flow</h5>
+            <ul class="list-unstyled m-0">
+              <li class="mb-2"><i class="fa-solid fa-circle-dot text-success me-2"></i>Client sends auth → <b>/api/auth/login</b> → gets JWT</li>
+              <li class="mb-2"><i class="fa-solid fa-circle-dot text-success me-2"></i>Sensor fetch → <b>/api/sensors/recent</b> (user-scoped)</li>
+              <li class="mb-2"><i class="fa-solid fa-circle-dot text-success me-2"></i>Summary → <b>/api/user-energy/average</b></li>
+              <li class="mb-2"><i class="fa-solid fa-circle-dot text-success me-2"></i>User config → <b>/api/user-energy/set-cost</b></li>
+              <li class="mb-2"><i class="fa-solid fa-circle-dot text-success me-2"></i>Export CSV → <b>/api/user-energy/export</b></li>
+              <li><i class="fa-solid fa-circle-dot text-success me-2"></i>Simulator admin → <b>/api/simulator/*</b></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="container">
+      <div class="text-center mb-5">
+        <div class="section-eyebrow">Features</div>
+        <h2 class="section-title mt-2">Technology Meets Sustainability</h2>
+      </div>
+      <div class="row g-4">
+        <div class="col-md-4 reveal">
+          <div class="cardx h-100 text-center p-4">
+            <i class="fa-solid fa-solar-panel fa-2x mb-3" style="color:#14a164"></i>
+            <h5>Live Data Simulation</h5>
+            <p class="muted">Realistic time-series energy generation/consumption for dev & demos.</p>
+          </div>
+        </div>
+        <div class="col-md-4 reveal">
+          <div class="cardx h-100 text-center p-4">
+            <i class="fa-solid fa-seedling fa-2x mb-3" style="color:#14a164"></i>
+            <h5>Environmental Analytics</h5>
+            <p class="muted">Track mix, emissions proxy, and renewable share. Export data instantly.</p>
+          </div>
+        </div>
+        <div class="col-md-4 reveal">
+          <div class="cardx h-100 text-center p-4">
+            <i class="fa-solid fa-lock fa-2x mb-3" style="color:#14a164"></i>
+            <h5>Secure Cloud Backend</h5>
+            <p class="muted">JWT-secured, stateless REST with CORS and role-ready endpoints.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TECH -->
+  <section id="tech" class="band-light">
+    <div class="container">
+      <div class="text-center mb-5">
+        <div class="section-eyebrow">Technology Stack</div>
+        <h2 class="section-title mt-2">Built with Modern Tools</h2>
+        <p class="muted">Battle-tested on Java & Spring; front-end is lightweight, fast, and delightful.</p>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-lg-6 reveal">
+          <div class="cardx h-100">
+            <h5 class="mb-3">Backend</h5>
+            <div class="d-flex flex-wrap gap-2">
+              <span class="chip"><i class="fa-brands fa-java"></i> Java 21</span>
+              <span class="chip"><i class="fa-solid fa-leaf"></i> Spring Boot 3</span>
+              <span class="chip"><i class="fa-solid fa-database"></i> MySQL</span>
+              <span class="chip"><i class="fa-solid fa-key"></i> JWT / JJWT</span>
+              <span class="chip"><i class="fa-solid fa-check-double"></i> Jakarta Validation</span>
+              <span class="chip"><i class="fa-solid fa-file-csv"></i> CSV (OpenCSV)</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6 reveal">
+          <div class="cardx h-100">
+            <h5 class="mb-3">Frontend</h5>
+            <div class="d-flex flex-wrap gap-2">
+              <span class="chip"><i class="fa-brands fa-bootstrap"></i> Bootstrap 5</span>
+              <span class="chip"><i class="fa-solid fa-wand-magic-sparkles"></i> GSAP</span>
+              <span class="chip"><i class="fa-solid fa-chart-line"></i> ApexCharts</span>
+              <span class="chip"><i class="fa-solid fa-icons"></i> Font Awesome</span>
+              <span class="chip"><i class="fa-solid fa-shield"></i> CORS-aware Fetch</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center mt-4 reveal">
+        <a href="login.html" class="cta-btn"><i class="fa-solid fa-play"></i> Try the Live Dashboard</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="container">
+      <div class="text-center mb-5">
+        <div class="section-eyebrow">Contact</div>
+        <h2 class="section-title mt-2">Join the Energy Revolution</h2>
+      </div>
+      <form class="mx-auto reveal" style="max-width:640px">
+        <div class="row g-3">
+          <div class="col-md-6"><input type="text" class="form-control form-control-lg" placeholder="Your Name" required></div>
+          <div class="col-md-6"><input type="email" class="form-control form-control-lg" placeholder="Your Email" required></div>
+          <div class="col-12"><textarea class="form-control form-control-lg" rows="5" placeholder="Your Message" required></textarea></div>
+          <div class="col-12"><button type="submit" class="cta-btn"><i class="fa-solid fa-paper-plane"></i> Send Message</button></div>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <footer>
+    <p class="m-0">© <span id="year"></span> SUEMS — Smart Urban Energy Management System</p>
+  </footer>
+
+  <!-- JS: Bootstrap + GSAP -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <script>
+    // year
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // GSAP: reveal on scroll
+    gsap.registerPlugin(ScrollTrigger);
+    gsap.utils.toArray('.reveal').forEach(el=>{
+      gsap.to(el, {
+        opacity:1, y:0, duration:.7, ease:'power2.out',
+        scrollTrigger:{ trigger:el, start:'top 85%' }
+      });
+    });
+
+    // subtle hero parallax
+    gsap.to('.hero-waves', {
+      y: 16, duration: 3, repeat:-1, yoyo:true, ease:'sine.inOut'
+    });
+  </script>
+</body>
+</html>

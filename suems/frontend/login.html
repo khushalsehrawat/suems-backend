@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SUEMS — Login / Signup</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+
+  <style>
+    :root {
+      --green1: #d2f8e2;
+      --green2: #b5f0c1;
+      --green3: #a3e7b2;
+      --dark: #09210d;
+      --accent: #53b77e;
+    }
+    * { font-family: 'Poppins', sans-serif; }
+    body {
+      height: 100vh;
+      margin: 0;
+      display: flex; justify-content: center; align-items: center;
+      background: radial-gradient(circle at 30% 30%, var(--green1), var(--green2), var(--green3));
+      background-size: 200% 200%;
+      animation: gradientFlow 18s ease infinite;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle pattern overlay */
+    body::before {
+      content: "";
+      position: absolute;
+      top:0; left:0; width:100%; height:100%;
+      background-image: url('assets/pattern.svg');
+      opacity: 0.15;
+    }
+
+    @keyframes gradientFlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .auth-card {
+      background: rgba(255,255,255,0.9);
+      border-radius: 20px;
+      padding: 40px;
+      width: 400px;
+      max-width: 95%;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      z-index: 2;
+    }
+
+    h3 { font-weight: 700; color: var(--dark); text-align: center; margin-bottom: 20px; }
+
+    .btn-uiverse {
+      background: linear-gradient(135deg, #53b77e, #6ed19a);
+      border: none; color: white;
+      font-weight: 600; border-radius: 10px;
+      width: 100%; padding: 10px; transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .btn-uiverse:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(83,183,126,0.4);
+    }
+
+    .tab-switch {
+      display: flex; justify-content: center; gap: 10px;
+      margin-bottom: 25px;
+    }
+    .tab-switch button {
+      flex: 1;
+      border-radius: 12px;
+      border: 1px solid #a8e4bb;
+      background: #f3fff7;
+      font-weight: 600; padding: 10px;
+      transition: 0.3s ease;
+    }
+    .tab-switch button.active {
+      background: #fff;
+      color: var(--dark);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="auth-card" id="authCard">
+    <h3 id="pageTitle">Welcome to SUEMS</h3>
+
+    <div class="tab-switch">
+      <button id="loginTab" class="active" onclick="showTab('login')">Login</button>
+      <button id="signupTab" onclick="showTab('signup')">Sign Up</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <form id="loginForm">
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input id="loginEmail" type="email" class="form-control" required />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input id="loginPassword" type="password" class="form-control" required />
+      </div>
+      <div id="loginMsg"></div>
+      <button class="btn-uiverse" type="submit">Login</button>
+    </form>
+
+    <!-- SIGNUP FORM -->
+    <form id="signupForm" class="d-none">
+      <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input id="regEmail" type="email" class="form-control" required />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input id="regPassword" type="password" class="form-control" required />
+      </div>
+      <div id="signupMsg"></div>
+      <button class="btn-uiverse" type="submit">Create Account</button>
+    </form>
+  </div>
+
+  <script>
+    // ✅ Backend base URL
+    const API_BASE = "http://localhost:8080";
+
+    const $ = id => document.getElementById(id);
+    function showTab(id){
+      ["login","signup"].forEach(t=>{
+        $(t+"Form").classList.add("d-none");
+        $(t+"Tab").classList.remove("active");
+      });
+      $(id+"Form").classList.remove("d-none");
+      $(id+"Tab").classList.add("active");
+    }
+
+    function showMsg(where, text, type='danger'){
+      $(where).innerHTML = `<div class="alert alert-${type} py-2">${text}</div>`;
+      setTimeout(()=>$(where).innerHTML='', 3000);
+    }
+
+    function persistAuth(a){
+      localStorage.setItem("token", a.token);
+      localStorage.setItem("email", a.email);
+      localStorage.setItem("userId", a.userId);
+      window.location.href = "dashboard.html";
+    }
+
+    // ---- Login ----
+    $("loginForm").addEventListener("submit", async e=>{
+      e.preventDefault();
+      const email = $("loginEmail").value.trim();
+      const password = $("loginPassword").value;
+      try {
+        const r = await fetch(`${API_BASE}/api/auth/login`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ email, password })
+        });
+        if(!r.ok) return showMsg("loginMsg", "Invalid Credentials or Server Error");
+        persistAuth(await r.json());
+      } catch(err){ showMsg("loginMsg", "Network Error: "+err); }
+    });
+
+    // ---- Signup ----
+    $("signupForm").addEventListener("submit", async e=>{
+      e.preventDefault();
+      const email = $("regEmail").value.trim();
+      const password = $("regPassword").value;
+      try {
+        const r = await fetch(`${API_BASE}/api/auth/register`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ email, password })
+        });
+        if(!r.ok) return showMsg("signupMsg", "Registration Failed or Email Exists");
+        persistAuth(await r.json());
+      } catch(err){ showMsg("signupMsg", "Network Error: "+err); }
+    });
+
+    // ---- GSAP Animation ----
+    gsap.from("#authCard", { duration: 1, y: 40, opacity: 0, ease: "power3.out" });
+  </script>
+</body>
+</html>

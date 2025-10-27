@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>SUEMS — Premium Energy Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Bootstrap & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+
+  <!-- GSAP -->
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+
+  <!-- CountUp (robust global access handled below) -->
+  <script src="https://cdn.jsdelivr.net/npm/countup.js@2.8.0/dist/countUp.umd.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Particles -->
+  <script src="https://cdn.jsdelivr.net/npm/tsparticles@3.7.1/tsparticles.bundle.min.js"></script>
+
+  <style>
+    :root{
+      --bg1:#e6f7ec; --bg2:#bff0c3; --bg3:#f0fff4;
+      --primary:#3aa76d; --primary-2:#58c08b; --accent:#a6f6c1;
+      --text:#0f241a; --muted:#5e7a6a; --card:#ffffff;
+      --glass: rgba(255,255,255,.16);
+      --glass-border: rgba(255,255,255,.35);
+      --shadow: 0 20px 40px rgba(0,0,0,.15);
+      --glow: 0 0 30px rgba(90, 210, 140, .35);
+    }
+
+    body {
+      min-height: 100vh; color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 8% 10%, rgba(180,255,210,.35) 0, transparent 60%),
+        radial-gradient(1200px 600px at 92% 90%, rgba(160,255,220,.30) 0, transparent 60%),
+        linear-gradient(120deg, var(--bg1), var(--bg2), var(--bg3));
+      background-size: 300% 300%;
+      animation: flow 18s ease-in-out infinite;
+      overflow-x: hidden;
+    }
+    @keyframes flow {
+      0% {background-position: 0% 50%}
+      50% {background-position: 100% 50%}
+      100% {background-position: 0% 50%}
+    }
+    #tsparticles { position: fixed; inset: 0; z-index: 0; }
+    .content-wrap { position: relative; z-index: 1; }
+
+    .navbar {
+      backdrop-filter: blur(14px);
+      background: linear-gradient( to bottom, rgba(255,255,255,.55), rgba(255,255,255,.35));
+      border-bottom: 1px solid rgba(255,255,255,.4);
+      box-shadow: var(--shadow);
+    }
+    .brand { font-weight: 800; letter-spacing:.5px; }
+
+    .u-card {
+      background: linear-gradient(180deg, rgba(255,255,255,.65), rgba(255,255,255,.35));
+      border: 1px solid var(--glass-border);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      transition: transform .25s ease, box-shadow .25s ease;
+    }
+    .u-card:hover { transform: translateY(-3px); box-shadow: 0 24px 50px rgba(0,0,0,.18), var(--glow); }
+    .chip{ background:#fff; border:1px solid #e3f4e6; padding:8px 12px; border-radius:12px; }
+
+    .u-btn {
+      --b: 2px; --s: .45em; --color: var(--primary);
+      padding: calc(.5em + var(--s)) calc(1.2em + var(--s));
+      color: var(--color);
+      --_p: var(--s);
+      background: conic-gradient(from 90deg at var(--b) var(--b),#0000 90deg,var(--color) 0)
+        var(--_p) var(--_p)/calc(100% - var(--b) - 2*var(--_p)) calc(100% - var(--b) - 2*var(--_p));
+      outline: var(--b) solid transparent; outline-offset: .6em;
+      border: 0; user-select: none; font-weight: 700;
+      border-radius: 12px; background-color: #fff; transition: .3s; white-space: nowrap;
+    }
+    .u-btn:hover { --_p: 0px; outline-color: var(--color); box-shadow: var(--glow); }
+    .u-btn.primary { color: #fff; background-color: var(--primary); }
+    .u-btn.primary:hover { background-color: var(--primary-2); }
+
+    .range-tabs { gap:.5rem; }
+    .range-tabs .btn { border-radius: 12px; border:1px solid #dff1e4; backdrop-filter: blur(10px); }
+    .range-tabs .btn.active { background: var(--primary); color: #fff; border-color: transparent; box-shadow: var(--glow); }
+
+    .modal-content {
+      background: linear-gradient(180deg, rgba(255,255,255,.82), rgba(255,255,255,.56));
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(12px);
+      border-radius: 18px;
+    }
+
+    #chartWrap { height: 460px; }
+    #lineChart { width:100%; height:100%; }
+  </style>
+</head>
+<body>
+  <div id="tsparticles"></div>
+
+  <div class="content-wrap">
+    <!-- NAV -->
+    <nav class="navbar navbar-expand-lg sticky-top">
+      <div class="container">
+        <a class="navbar-brand brand fs-4" href="#">SUEMS</a>
+        <div class="ms-auto d-flex align-items-center gap-2">
+          <span id="userEmail" class="chip"></span>
+          <button class="btn btn-sm btn-outline-dark" id="btnLogout"><i class="fa-solid fa-arrow-right-from-bracket"></i> Logout</button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="container my-4">
+      <div class="p-4 p-md-5 u-card">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+          <div>
+            <h2 class="mb-1" style="text-shadow: 0 18px 40px rgba(0,0,0,.15);">Smart Urban Energy Management</h2>
+            <p class="text-muted mb-0">Live analytics • Cost tracking • Renewable insights — <span class="fw-semibold">premium-grade</span> dashboard.</p>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="u-btn" id="openConfig"><i class="fa-solid fa-gear"></i> Configure Dashboard</button>
+            <button class="u-btn primary" id="exportCsv"><i class="fa-solid fa-file-arrow-down"></i> Export CSV</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- METRICS -->
+    <section class="container">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="u-card p-3">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <small class="text-muted">Total Energy Used</small>
+                <h3 class="mb-0"><span id="statEnergy">0</span> kWh</h3>
+              </div>
+              <i class="fa-solid fa-bolt fa-2x" style="color:var(--primary)"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="u-card p-3">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <small class="text-muted">Total Cost</small>
+                <h3 class="mb-0">₹ <span id="statCost">0</span></h3>
+              </div>
+              <i class="fa-solid fa-indian-rupee-sign fa-2x" style="color:var(--primary)"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="u-card p-3">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <small class="text-muted">Avg. Cost / kWh</small>
+                <h3 class="mb-0">₹ <span id="statAvg">0</span></h3>
+              </div>
+              <i class="fa-solid fa-scale-balanced fa-2x" style="color:var(--primary)"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTROLS BAR -->
+    <section class="container mt-4">
+      <div class="u-card p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div class="btn-group range-tabs" role="group" aria-label="Ranges">
+          <button type="button" class="btn btn-light active" data-range="today">Today</button>
+          <button type="button" class="btn btn-light" data-range="24h">Last 24h</button>
+          <button type="button" class="btn btn-light" data-range="custom">Custom</button>
+        </div>
+        <div class="d-flex align-items-center gap-2" id="customRangeInputs" style="display:none;">
+          <input type="datetime-local" id="fromTs" class="form-control" />
+          <input type="datetime-local" id="toTs" class="form-control" />
+          <button class="u-btn" id="applyCustom">Apply</button>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          <div class="chip" id="selectedMeta">Type: <b>Solar</b> • Refresh: <b>10s</b></div>
+          <div class="chip" id="countdown">Refreshing in: <b>—</b></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHART -->
+    <section class="container my-4">
+      <div class="u-card p-3">
+        <div id="chartWrap"><canvas id="lineChart"></canvas></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- CONFIG MODAL -->
+  <div class="modal fade" id="configModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content p-3">
+        <div class="modal-header border-0">
+          <h5 class="modal-title">Configure Dashboard</h5>
+          <button class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body pt-0">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Energy Type (Single Series)</label>
+              <select id="energyType" class="form-select">
+                <option value="SOLAR" selected>Solar</option>
+                <option value="WIND">Wind</option>
+                <option value="GRID">Grid</option>
+                <option value="EV">EV (fallback to Grid if no evPower)</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Unit Cost (₹/kWh)</label>
+              <input id="unitCost" type="number" min="0" step="0.01" class="form-control" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Refresh Interval</label>
+              <select id="refresh" class="form-select">
+                <option value="10000">10s (dev)</option>
+                <option value="60000">1 min</option>
+                <option value="300000">5 min</option>
+                <option value="900000">15 min</option>
+                <option value="1800000">30 min</option>
+                <option value="3600000">60 min</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button class="u-btn" data-bs-dismiss="modal">Cancel</button>
+          <button class="u-btn primary" id="saveConfig">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+   <script>
+    /* ========================== CONSTANTS & SAFE HELPERS ========================== */
+    
+    /* THIS WHEN WE RUN ON LOCAL */
+    const BASE = 'http://localhost:8080';
+
+    /* tHIS WHEN RUN ON RENDER OR ANY WEBSITE BASED */
+    //const BASE = 'http://backend:8080';
+    const token = localStorage.getItem('token');
+    if(!token){ location.href = 'login.html'; }
+
+    const authHeaders = (extra={}) => Object.assign({'Authorization':'Bearer '+token,'Accept':'application/json'}, extra);
+    const $ = id => document.getElementById(id);
+
+    const ENERGY_MAP = {
+      SOLAR: { key:'solarPower', label:'Solar', color:'#f4b400' },
+      WIND:  { key:'windPower',  label:'Wind',  color:'#28b0d9' },
+      GRID:  { key:'gridUsage',  label:'Grid',  color:'#7b8f80' },
+      EV:    { key:'evPower',    label:'EV',    color:'#8c5bd3' }, // fallback handled in code
+    };
+
+    let selectedType   = localStorage.getItem('selectedEnergyType') || 'SOLAR';
+    let refreshMs      = Number(localStorage.getItem('refreshMs') || 10000);
+    let unitCostCache  = 0;
+    let currentRange   = 'today';
+    let pollHandle     = null;
+    let countdownInt   = null;
+    let countdownLeft  = 0;
+
+    // CountUp robust access
+    const CountUpCtor = (window.countUp && window.countUp.CountUp) ? window.countUp.CountUp
+                        : (window.CountUp ? window.CountUp : null);
+    let cuEnergy = null, cuCost = null, cuAvg = null;
+
+    let lineChart = null;
+
+    $('userEmail').innerText = localStorage.getItem('email') || '';
+
+    // Particles (safe init)
+    try{
+      tsParticles.load("tsparticles", {
+        fullScreen: { enable: false },
+        background: { color: "transparent" },
+        fpsLimit: 60,
+        particles: {
+          number: { value: 35, density: { enable: true, area: 800 } },
+          color: { value: ["#7ae582","#58c08b","#a6f6c1"] },
+          shape: { type: "circle" },
+          opacity: { value: 0.35, random: true },
+          size: { value: { min: 2, max: 5 } },
+          links: { enable: true, color:"#78dba3", distance: 140, opacity: 0.25, width: 1 },
+          move: { enable: true, speed: 1.2 }
+        },
+        detectRetina: true
+      });
+    }catch(e){ console.warn('Particles init error:', e); }
+
+    gsap.from(".u-card", {opacity:0, y:20, duration:.6, stagger:.08, ease:"power2.out"});
+
+    /* ========================== RANGE HANDLERS ========================== */
+    document.querySelectorAll('.range-tabs .btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        document.querySelectorAll('.range-tabs .btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        currentRange = btn.dataset.range;
+        $('customRangeInputs').style.display = (currentRange === 'custom') ? '' : 'none';
+        loadAll();
+      });
+    });
+    $('applyCustom').addEventListener('click', loadAll);
+
+    /* ========================== LOGOUT ========================== */
+    $('btnLogout').addEventListener('click', (e)=>{
+      e.preventDefault();
+      localStorage.removeItem('token');
+      localStorage.removeItem('userId');
+      localStorage.removeItem('email');
+      location.href = 'login.html';
+    });
+
+    /* ========================== CONFIG ========================== */
+const configModal = new bootstrap.Modal(document.getElementById('configModal'));
+    $('openConfig').addEventListener('click', ()=>{
+      $('energyType').value = selectedType;
+      $('refresh').value    = String(refreshMs);
+      $('unitCost').value   = unitCostCache;
+      configModal.show();
+    });
+
+    $('saveConfig').addEventListener('click', async ()=>{
+      try{
+        selectedType = $('energyType').value;
+        localStorage.setItem('selectedEnergyType', selectedType);
+
+        const cost = Number($('unitCost').value || 0);
+        const ms   = Number($('refresh').value);
+        refreshMs  = ms; localStorage.setItem('refreshMs', String(ms));
+
+        // Save cost (ignore errors to avoid blocking UI)
+        try{
+          await fetch(`${BASE}/api/user-energy/set-cost?unitCost=${cost}`, {method:'POST', headers: authHeaders()});
+          unitCostCache = cost;
+        }catch(e){ console.warn('set-cost failed:', e); }
+
+        // Update simulator interval if backend supports it
+        try{
+          await fetch(`${BASE}/api/simulator/interval?ms=${ms}`, {method:'PUT', headers: authHeaders()});
+        }catch(e){ console.warn('interval set failed:', e); }
+
+        updateSelectedMeta(selectedType, ms);
+        //applyPolling();
+        await refreshData();
+        configModal.hide();
+      }catch(e){ console.error(e); alert('Failed to save config.'); }
+    });
+
+  
+
+function tsArrayToDate(arr){
+  if (Array.isArray(arr)) {
+    const [y, m, d, H, M, S] = arr;
+    return new Date(y, m - 1, d, H, M, S);
+  }
+  if (typeof arr === 'string') {
+    const d = new Date(arr);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+
+
+
+    function fmt(dt){
+      if(!dt) return '';
+      const p = n=>String(n).padStart(2,'0');
+      return `${dt.getFullYear()}-${p(dt.getMonth()+1)}-${p(dt.getDate())} ${p(dt.getHours())}:${p(dt.getMinutes())}:${p(dt.getSeconds())}`;
+    }
+
+    function rangeToFrom(){
+      const now = new Date();
+      if(currentRange === 'today'){
+        const start = new Date(); start.setHours(0,0,0,0);
+        return {from:start, to:now};
+      }
+      if(currentRange === '24h'){
+        const start = new Date(now.getTime()-24*60*60*1000);
+        return {from:start, to:now};
+      }
+      const f = $('fromTs').value, t = $('toTs').value;
+      return { from: f ? new Date(f) : new Date(now.getTime()-60*60*1000), to: t ? new Date(t) : now };
+    }
+
+    /* ========================== DATA LOADERS (safe) ========================== */
+    async function loadUnitCost(){
+      try{
+        const r = await fetch(`${BASE}/api/user-energy/get-cost`, { headers: authHeaders() });
+        const txt = await r.text();
+        const num = Number(txt);
+        unitCostCache = isNaN(num) ? 0 : num;
+      }catch(e){ console.warn('get-cost failed:', e); }
+    }
+
+    async function loadSummaryCards(){
+      try{
+        const r = await fetch(`${BASE}/api/user-energy/average?range=day`, { headers: authHeaders() });
+        const s = await r.json();
+        if(CountUpCtor){
+          cuEnergy = cuEnergy || new CountUpCtor('statEnergy', 0, {decimalPlaces:2});
+          cuCost   = cuCost   || new CountUpCtor('statCost', 0, {decimalPlaces:2});
+          cuAvg    = cuAvg    || new CountUpCtor('statAvg',  0, {decimalPlaces:2});
+          const totalConsumption = Number(s.totalConsumption||0);
+          const totalCost        = Number(s.totalCost||0);
+          const avgCost          = totalConsumption>0 ? (totalCost/totalConsumption) : 0;
+          cuEnergy.update(totalConsumption);
+          cuCost.update(totalCost);
+          cuAvg.update(avgCost);
+        } else {
+          $('statEnergy').innerText = (s.totalConsumption||0).toFixed(2);
+          $('statCost').innerText   = (s.totalCost||0).toFixed(2);
+          $('statAvg').innerText    = ( (s.totalConsumption>0) ? (s.totalCost/s.totalConsumption) : 0 ).toFixed(2);
+        }
+      }catch(e){
+        console.warn('average failed:', e);
+      }
+    }
+
+    function pickTypeMeta(sample){
+      let meta = ENERGY_MAP[selectedType] || ENERGY_MAP.SOLAR;
+      if(selectedType==='EV' && (sample?.evPower === undefined || sample?.evPower === null)){
+        meta = { ...ENERGY_MAP.GRID, label:'EV (Grid)' };
+      }
+      return meta;
+    }
+       
+
+    async function saveSensorData() {
+  const token = localStorage.getItem("token");
+  const payload = {
+    solarPower: 3.22,
+    windPower: 1.10,
+    gridUsage: 2.85,
+    totalConsumption: 7.17,
+    timestamp: new Date().toISOString()
+  };
+
+  const res = await fetch("http://localhost:8080/api/sensors/saveWithCost", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (res.ok) {
+    const data = await res.json();
+    console.log("✅ Data saved:", data);
+  } else {
+    const err = await res.text();
+    console.error("❌ Failed:", err);
+  }
+}
+
+    /* ========================== LOAD SERIES (FIXED) ========================== */
+  
+
+async function loadSeries() {
+  let raw = []; // ✅ Declare at top to avoid "before initialization"
+
+  try {
+    const response = await fetch(`${BASE}/api/sensors/recent`, { headers: authHeaders() });
+
+    if (!response.ok) {
+      console.error("Backend error:", response.status);
+      return { labels: [], power: [], cost: [], typeMeta: ENERGY_MAP[selectedType] };
+    }
+
+    try {
+      raw = await response.json();
+    } catch (err) {
+      console.warn("⚠️ No valid JSON returned from backend");
+      return { labels: [], power: [], cost: [], typeMeta: ENERGY_MAP[selectedType] };
+    }
+
+    console.log("📡 RAW from /api/sensors/recent:", raw);
+
+    // ✅ 1. Handle empty response
+    if (!Array.isArray(raw) || raw.length === 0) {
+      console.warn("⚠️ No sensor data available from backend");
+      return { labels: [], power: [], cost: [], typeMeta: ENERGY_MAP[selectedType] };
+    }
+
+    // ✅ 2. Convert timestamps and sort chronologically
+    const sorted = raw
+      .map(x => ({
+        ...x,
+        dateObj: Array.isArray(x.timestamp)
+          ? new Date(x.timestamp[0], x.timestamp[1] - 1, x.timestamp[2], x.timestamp[3], x.timestamp[4], x.timestamp[5])
+          : new Date(x.timestamp)
+      }))
+      .filter(x => !isNaN(x.dateObj))
+      .sort((a, b) => a.dateObj - b.dateObj);
+
+    console.log("✅ SORTED first 3:", sorted.slice(0, 3));
+
+    // ✅ 3. Determine correct field
+    const sample = sorted[0] || {};
+    const typeMeta = pickTypeMeta(sample);
+
+    // ✅ 4. Prepare datasets
+    const labels = sorted.map(x => x.dateObj.toISOString().slice(11, 19));
+    const power  = sorted.map(x => Number(x[typeMeta.key] || 0));
+    const cost   = sorted.map(x => Number(x.totalConsumption || 0) * (unitCostCache || 1));
+
+    console.log(`✅ ${typeMeta.label} → labels:${labels.length}, power:${power.length}, cost:${cost.length}`);
+
+    return { labels, power, cost, typeMeta };
+  } catch (err) {
+    console.error("❌ loadSeries() failed:", err);
+    return { labels: [], power: [], cost: [], typeMeta: ENERGY_MAP[selectedType] };
+  }
+}
+
+function updateChartLive({ labels, power, cost, typeMeta }) {
+  if (!lineChart) {
+    // if no chart yet, draw first time
+    renderChart({ labels, power, cost, typeMeta });
+    return;
+  }
+
+  const chart = lineChart;
+
+  // Append only new data points
+  const lastLabel = chart.data.labels.at(-1);
+  const newPoints = [];
+  for (let i = 0; i < labels.length; i++) {
+    if (labels[i] === lastLabel) continue;
+    newPoints.push(i);
+  }
+
+  newPoints.forEach(i => {
+    chart.data.labels.push(labels[i]);
+    chart.data.datasets[0].data.push(power[i]);
+    chart.data.datasets[1].data.push(cost[i]);
+  });
+
+  // Optional: Keep last 30–50 points to prevent overcrowding
+  const maxPoints = 50;
+  if (chart.data.labels.length > maxPoints) {
+    chart.data.labels.splice(0, chart.data.labels.length - maxPoints);
+    chart.data.datasets.forEach(ds => ds.data.splice(0, ds.data.length - maxPoints));
+  }
+
+  // Animate smoothly
+  chart.update('active');
+}
+
+
+
+    /* ========================== CHART ========================== */
+    function renderChart({labels, power, cost, typeMeta}){
+      const ctx = document.getElementById('lineChart').getContext('2d');
+      const h = ctx.canvas.height || 400;
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, `${typeMeta.color}66`);
+      grad.addColorStop(1, `${typeMeta.color}00`);
+
+      if(lineChart){ lineChart.destroy(); }
+
+      lineChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: `${typeMeta.label} (kW)`,
+              data: power,
+              borderColor: typeMeta.color,
+              backgroundColor: grad,
+              tension: 0.35,
+              borderWidth: 2,
+              fill: true,
+              pointRadius: 0,
+              yAxisID: 'y'
+            },
+            {
+              label: 'Cost',
+              data: cost,
+              borderColor: '#2b5b41',
+              borderDash: [6,6],
+              tension: 0.35,
+              borderWidth: 2,
+              fill: false,
+              pointRadius: 0,
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 450, easing: 'easeOutCubic' },
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: {
+              callbacks: {
+                title: (items)=> items[0]?.label || '',
+                label: (ctx)=>{
+                  const v = ctx.parsed.y ?? 0;
+                  return `${ctx.dataset.label}: ${v.toFixed(2)}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: { ticks: { color:'#284235', autoSkip:true, autoSkipPadding:16 }, grid: { color:'rgba(40,80,60,.15)' } },
+            y: { position:'left', title:{display:true,text:'Power (kW)'}, grid:{ color:'rgba(40,80,60,.15)' } },
+            y1:{ position:'right', title:{display:true,text:'Cost'}, grid:{ display:false } }
+          }
+        }
+      });
+    }
+
+    /* ========================== POLLING ========================== */
+    function updateSelectedMeta(type, ms){
+      const sec = Math.round(ms/1000);
+      const label = (ENERGY_MAP[type]||ENERGY_MAP.SOLAR).label;
+      $('selectedMeta').innerHTML = `Type: <b>${label}</b> • Refresh: <b>${sec<60?sec+'s':(sec/60)+'m'}</b>`;
+    }
+
+    function applyPolling(){
+      if(pollHandle) clearInterval(pollHandle);
+      if(countdownInt) clearInterval(countdownInt);
+
+      countdownLeft = Math.round(refreshMs/1000);
+      $('countdown').innerHTML = `Refreshing in: <b>${countdownLeft}s</b>`;
+      countdownInt = setInterval(()=>{
+        countdownLeft--;
+        if(countdownLeft < 0) countdownLeft = Math.round(refreshMs/1000);
+        $('countdown').innerHTML = `Refreshing in: <b>${countdownLeft}s</b>`;
+      }, 1000);
+
+      pollHandle = setInterval(async ()=>{
+        await refreshData();
+        countdownLeft = Math.round(refreshMs/1000);
+      }, refreshMs);
+    }
+
+    /* ========================== MASTER LOAD ========================== */
+    async function refreshData(){
+  const series = await loadSeries();
+  if(series.labels.length === 0){
+    console.warn("⚠️ No data, skipping chart update");
+    return;
+  }
+  updateChartLive(series);
+  gsap.from('#chartWrap', {opacity:0.85, duration:.35});
+  await loadSummaryCards();
+}
+
+
+    async function loadAll(){
+      await loadUnitCost();
+      await refreshData();
+    }
+
+ 
+(async function boot(){
+  console.log("🚀 Starting DB live mode...");
+  await loadUnitCost();
+
+  // Start countdown display
+  countdownLeft = Math.round(refreshMs / 1000);
+  $('countdown').innerHTML = `Refreshing in: <b>${countdownLeft}s</b>`;
+  setInterval(() => {
+    countdownLeft--;
+    if (countdownLeft < 0) countdownLeft = Math.round(refreshMs / 1000);
+    $('countdown').innerHTML = `Refreshing in: <b>${countdownLeft}s</b>`;
+  }, 1000);
+
+  async function refresh(){
+    const data = await loadSeries();
+    updateChartLive(data);
+    await loadSummaryCards();
+    countdownLeft = Math.round(refreshMs / 1000); // reset after each refresh
+  }
+
+  await refresh();
+  setInterval(refresh, refreshMs);
+})();
+
+
+
+/* ========================== LIVE SENSOR SIMULATION ========================== */
+async function simulateLiveSensorData() {
+  const token = localStorage.getItem("token");
+  if (!token) return;
+
+  // Generate random realistic energy values
+  const solarPower = (Math.random() * 4 + 1).toFixed(2); // 1–5 kW
+  const windPower = (Math.random() * 2 + 0.5).toFixed(2); // 0.5–2.5 kW
+  const gridUsage = (Math.random() * 3 + 1).toFixed(2);   // 1–4 kW
+  const totalConsumption = (
+    parseFloat(solarPower) +
+    parseFloat(windPower) +
+    parseFloat(gridUsage)
+  ).toFixed(2);
+
+  const payload = {
+    solarPower: Number(solarPower),
+    windPower: Number(windPower),
+    gridUsage: Number(gridUsage),
+    totalConsumption: Number(totalConsumption),
+    timestamp: new Date().toISOString()
+  };
+
+  try {
+    const res = await fetch(`${BASE}/api/sensors/saveWithCost`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      const data = await res.json();
+      console.log("🌞 Simulated live reading saved:", data);
+    } else {
+      console.error("⚠️ Simulation failed:", res.status);
+    }
+  } catch (err) {
+    console.error("❌ Simulation error:", err);
+  }
+}
+
+/* ========================== START AUTO-SIMULATION ========================== */
+setInterval(async () => {
+  await simulateLiveSensorData();
+}, 15000); // Every 15 seconds
+
+
+  </script>
+
+</body>
+</html>
