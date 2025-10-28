@@ -15,7 +15,7 @@ public class CorsConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
                     
-                        .allowedOriginPatterns("http://localhost:5500", "http://127.0.0.1:5501", "http://localhost:3000", "https://suems-frontend.onrender.com")
+                        .allowedOriginPatterns("http://localhost:5500", "http://127.0.0.1:5501", "http://localhost:3000", "https://suems-frontend.onrender.com", "https://suems.onrender.com",)
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true)
@@ -24,5 +24,6 @@ public class CorsConfig {
         };
     }
 }
+
 
 
