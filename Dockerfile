@@ -1,20 +1,19 @@
-# ---------- Build stage ----------
-FROM openjdk:21-jdk-slim AS build
+# ---------- Build Stage ----------
+FROM maven:3.9.6-eclipse-temurin-21 AS build
 WORKDIR /app
 
-# Copy Maven wrapper + config first to cache dependencies
-COPY pom.xml mvnw ./
-COPY .mvn .mvn
-RUN ./mvnw dependency:go-offline -B
+# Copy pom.xml first to leverage Docker cache
+COPY pom.xml ./
+RUN mvn dependency:go-offline -B
 
-# Now copy the source and build
+# Copy source and build application
 COPY src ./src
-RUN ./mvnw clean package -DskipTests -B
+RUN mvn clean package -DskipTests -B
 
-# ---------- Run stage ----------
-FROM openjdk:21-jdk-slim
+# ---------- Run Stage ----------
+FROM eclipse-temurin:21-jdk-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
 EXPOSE 8080
-ENTRYPOINT ["java","-jar","/app/app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
