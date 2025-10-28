@@ -9,7 +9,7 @@ import org.hibernate.validator.constraints.UniqueElements;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user") // ✅ PostgreSQL-safe table name
+@Table(name = "users") // ✅ PostgreSQL-safe table name
 public class User {
 
     public enum Role {USER , ADMIN}
@@ -82,5 +82,6 @@ public class User {
         this.createdAt = createdAt;
     }
 }
+
 
 
