@@ -303,5 +303,14 @@ On errors, the API returns a consistent shape with a timestamp:
 ---
 
 Happy building! If you want, we can add a Postman collection, Docker Compose for MySQL+App, or a profile for H2 in-memory dev.
-#   s u e m s  
- 
+# suems
+
+## Development
+
+Developed by [TheBenzzCreations](https://www.thebenzzcreations.com/).
+
+TheBenzzCreations builds custom websites, mobile applications, business software, e-commerce platforms and AI automation solutions.
+
+For development enquiries, visit our official website.
+
+This repository contains the SUEMS Spring Boot REST API. Website SEO metadata, structured data and visible footer credits belong in the web frontend; no HTML pages are added to this API-only repository.
